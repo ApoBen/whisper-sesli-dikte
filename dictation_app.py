@@ -452,22 +452,29 @@ class WhisperDictationApp(QMainWindow):
         return self.model_combo.currentText()
 
     def create_tab(self, name, lang="tr", translate=False):
-        from PySide6.QtWidgets import QLineEdit
+        from PySide6.QtWidgets import QLineEdit, QGridLayout
         tab_widget = QWidget()
-        tab_layout = QHBoxLayout(tab_widget)
+        tab_layout = QGridLayout(tab_widget)
         tab_layout.setContentsMargins(10, 8, 10, 8)
-        tab_layout.setSpacing(12)
+        tab_layout.setSpacing(8)
         
-        # Name Edit
+        # Row 0 Left: Name Edit
         name_edit = QLineEdit(name)
         name_edit.setMaxLength(15)
         name_edit.setPlaceholderText("Sekme Adı")
         name_edit.setStyleSheet("background-color: #121318; border: 1px solid #2d303f; border-radius: 6px; padding: 4px 8px; font-weight: bold; color: #e1e1e6;")
-        name_edit.setMaximumWidth(110)
-        tab_layout.addWidget(name_edit)
+        name_edit.setMinimumWidth(110)
+        tab_layout.addWidget(name_edit, 0, 0)
         
-        # Lang combo
-        tab_layout.addWidget(QLabel("Dil:"))
+        # Row 0 Right: Source Lang
+        lang_widget = QWidget()
+        lang_layout = QHBoxLayout(lang_widget)
+        lang_layout.setContentsMargins(0, 0, 0, 0)
+        lang_layout.setSpacing(6)
+        
+        lang_label = QLabel("Dil:")
+        lang_layout.addWidget(lang_label)
+        
         lang_combo = QComboBox()
         lang_combo.addItem("Türkçe", "tr")
         lang_combo.addItem("İngilizce", "en")
@@ -477,17 +484,23 @@ class WhisperDictationApp(QMainWindow):
         lang_combo.addItem("Otomatik Algıla", "auto")
         lang_combo.setCurrentIndex(lang_combo.findData(lang))
         lang_combo.currentIndexChanged.connect(self.check_models)
-        tab_layout.addWidget(lang_combo)
+        lang_layout.addWidget(lang_combo)
         
-        # Translate check
-        trans_cb = QCheckBox("Çevir (-tr)")
+        tab_layout.addWidget(lang_widget, 0, 1)
+        
+        # Row 1 Left: Translate Checkbox
+        trans_cb = QCheckBox("Çevir")
         trans_cb.setChecked(translate)
-        tab_layout.addWidget(trans_cb)
+        tab_layout.addWidget(trans_cb, 1, 0)
         
-        # Target Lang label and combo (shown only if translate check box is checked)
+        # Row 1 Right: Target Lang
+        target_widget = QWidget()
+        target_layout = QHBoxLayout(target_widget)
+        target_layout.setContentsMargins(0, 0, 0, 0)
+        target_layout.setSpacing(6)
+        
         target_label = QLabel("Hedef:")
-        target_label.setVisible(translate)
-        tab_layout.addWidget(target_label)
+        target_layout.addWidget(target_label)
         
         target_combo = QComboBox()
         target_combo.addItem("İngilizce", "en")
@@ -500,10 +513,15 @@ class WhisperDictationApp(QMainWindow):
         target_combo.addItem("Arapça", "ar")
         target_combo.addItem("Japonca", "ja")
         target_combo.setCurrentIndex(0) # Default to English
-        target_combo.setVisible(translate)
-        tab_layout.addWidget(target_combo)
+        target_layout.addWidget(target_combo)
         
-        # Connect toggles
+        tab_layout.addWidget(target_widget, 1, 1)
+        
+        # Set initial visibility based on translate flag
+        target_label.setVisible(translate)
+        target_combo.setVisible(translate)
+        
+        # Connect toggles to hide/show target widgets dynamically
         trans_cb.toggled.connect(target_label.setVisible)
         trans_cb.toggled.connect(target_combo.setVisible)
         
