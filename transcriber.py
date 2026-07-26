@@ -39,11 +39,8 @@ class TranscriberThread(QThread):
         
         try:
             process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if process.returncode != 0:
-                err_msg = process.stderr.decode('utf-8', errors='ignore')
-                self.error.emit(f"whisper-cli error: {err_msg}")
-                return
-                
+            
+            # Vulkan çıkış hatasını (cleanup crash) bypass etmek için önce çıktı dosyasını kontrol et
             if os.path.exists(self.output_txt):
                 with open(self.output_txt, 'r', encoding='utf-8') as f:
                     text = f.read().strip()
@@ -55,6 +52,9 @@ class TranscriberThread(QThread):
                     os.remove(self.output_txt)
                 except Exception:
                     pass
+            elif process.returncode != 0:
+                err_msg = process.stderr.decode('utf-8', errors='ignore')
+                self.error.emit(f"whisper-cli error: {err_msg}")
             else:
                 self.error.emit("Transcription completed but output file not found.")
         except Exception as e:
