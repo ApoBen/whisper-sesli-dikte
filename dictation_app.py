@@ -267,6 +267,40 @@ class WhisperDictationApp(QMainWindow):
         main_layout.setSpacing(16)
         main_layout.setContentsMargins(20, 20, 20, 20)
 
+        # Tabbed interface for modes & languages (At the very top)
+        from PySide6.QtWidgets import QTabWidget
+        self.tabs = QTabWidget()
+        
+        tab_tr = QWidget()
+        layout_tr = QVBoxLayout(tab_tr)
+        lbl_tr = QLabel("Türkçe sesleri çözümler ve Türkçe olarak yazdırır.")
+        lbl_tr.setAlignment(Qt.AlignCenter)
+        layout_tr.addWidget(lbl_tr)
+        self.tabs.addTab(tab_tr, "🇹🇷 Türkçe Dikte")
+        
+        tab_en = QWidget()
+        layout_en = QVBoxLayout(tab_en)
+        lbl_en = QLabel("English sesleri çözümler ve İngilizce olarak yazdırır.")
+        lbl_en.setAlignment(Qt.AlignCenter)
+        layout_en.addWidget(lbl_en)
+        self.tabs.addTab(tab_en, "🇬🇧 İngilizce Dikte")
+        
+        tab_trans = QWidget()
+        layout_trans = QVBoxLayout(tab_trans)
+        lbl_trans = QLabel("Herhangi bir dildeki konuşmayı İngilizceye çevirerek yazdırır.")
+        lbl_trans.setAlignment(Qt.AlignCenter)
+        layout_trans.addWidget(lbl_trans)
+        self.tabs.addTab(tab_trans, "🔀 İngilizceye Çeviri")
+        
+        tab_auto = QWidget()
+        layout_auto = QVBoxLayout(tab_auto)
+        lbl_auto = QLabel("Konuşma dilini otomatik tespit eder ve kendi dilinde yazdırır.")
+        lbl_auto.setAlignment(Qt.AlignCenter)
+        layout_auto.addWidget(lbl_auto)
+        self.tabs.addTab(tab_auto, "🌍 Otomatik Algıla")
+        
+        main_layout.addWidget(self.tabs)
+
         # Header / Status
         self.status_label = QLabel("Başlatılmaya hazır")
         self.status_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #e1e1e6;")
@@ -307,40 +341,6 @@ class WhisperDictationApp(QMainWindow):
         self.model_combo.currentTextChanged.connect(self.check_models)
         model_layout.addWidget(self.model_combo)
         main_layout.addLayout(model_layout)
-
-        # Tabbed interface for modes & languages
-        from PySide6.QtWidgets import QTabWidget
-        self.tabs = QTabWidget()
-        
-        tab_tr = QWidget()
-        layout_tr = QVBoxLayout(tab_tr)
-        lbl_tr = QLabel("Türkçe sesleri çözümler ve Türkçe olarak yazdırır.")
-        lbl_tr.setAlignment(Qt.AlignCenter)
-        layout_tr.addWidget(lbl_tr)
-        self.tabs.addTab(tab_tr, "🇹🇷 Türkçe Dikte")
-        
-        tab_en = QWidget()
-        layout_en = QVBoxLayout(tab_en)
-        lbl_en = QLabel("English sesleri çözümler ve İngilizce olarak yazdırır.")
-        lbl_en.setAlignment(Qt.AlignCenter)
-        layout_en.addWidget(lbl_en)
-        self.tabs.addTab(tab_en, "🇬🇧 İngilizce Dikte")
-        
-        tab_trans = QWidget()
-        layout_trans = QVBoxLayout(tab_trans)
-        lbl_trans = QLabel("Herhangi bir dildeki konuşmayı İngilizceye çevirerek yazdırır.")
-        lbl_trans.setAlignment(Qt.AlignCenter)
-        layout_trans.addWidget(lbl_trans)
-        self.tabs.addTab(tab_trans, "🔀 İngilizceye Çeviri")
-        
-        tab_auto = QWidget()
-        layout_auto = QVBoxLayout(tab_auto)
-        lbl_auto = QLabel("Konuşma dilini otomatik tespit eder ve kendi dilinde yazdırır.")
-        lbl_auto.setAlignment(Qt.AlignCenter)
-        layout_auto.addWidget(lbl_auto)
-        self.tabs.addTab(tab_auto, "🌍 Otomatik Algıla")
-        
-        main_layout.addWidget(self.tabs)
 
         # Downloader Progress Bar
         self.download_bar = QProgressBar()
