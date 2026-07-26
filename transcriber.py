@@ -38,6 +38,7 @@ class TranscriberThread(QThread):
             cmd.append('-tr')
         
         try:
+            print(f"Executing: {' '.join(cmd)}")
             process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             
             # Vulkan çıkış hatasını (cleanup crash) bypass etmek için önce çıktı dosyasını kontrol et
