@@ -23,7 +23,13 @@ Bu uygulama, Linux (özellikle Arch Linux ve KDE Plasma/Wayland) sistemlerinde g
 
 ## Kurulum
 
-Uygulamayı ve tüm bağımlılıklarını kurmak için `install.sh` betiğini çalıştırabilirsiniz:
+Uygulamayı ve tüm bağımlılıklarını **tek bir komutla** kurmak için terminalde aşağıdaki `curl` komutunu çalıştırmanız yeterlidir:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/ApoBen/whisper-sesli-dikte/main/install.sh | bash
+```
+
+Eğer depoyu zaten klonladıysanız, doğrudan dizin içinden de kurabilirsiniz:
 
 ```bash
 chmod +x install.sh

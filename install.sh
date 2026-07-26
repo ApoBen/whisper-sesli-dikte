@@ -7,6 +7,15 @@ NC='\033[0m'
 
 echo -e "${GREEN}[*] Evrensel Whisper Sesli Dikte Kurulumu Başlatılıyor...${NC}"
 
+# Eğer script doğrudan curl ile uzaktan çalıştırıldıysa, depoyu klonla ve içine gir
+if [ ! -f "dictation_app.py" ]; then
+    echo -e "${GREEN}[*] Proje dosyaları indirilip kuruluyor...${NC}"
+    INSTALL_DIR="$HOME/.local/share/whisper-dictation"
+    rm -rf "$INSTALL_DIR"
+    git clone https://github.com/ApoBen/whisper-sesli-dikte.git "$INSTALL_DIR"
+    cd "$INSTALL_DIR" || exit 1
+fi
+
 # 1. Dağıtım tespiti ve Bağımlılıkların Kurulumu
 if command -v pacman &> /dev/null; then
     echo -e "${GREEN}[*] Arch Linux tespit edildi. Paketler pacman ile kuruluyor...${NC}"
