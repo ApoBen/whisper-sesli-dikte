@@ -97,6 +97,7 @@ class WhisperDictationApp(QMainWindow):
         self.scratch_dir = "/home/apobenol/.gemini/antigravity/scratch"
         self.wav_path = "/tmp/whisper_app_record.wav"
         
+        self.ensure_ydotoold()
         self.recorder = AudioRecorder(self.wav_path)
         self.transcriber_thread = None
         self.downloader_thread = None
@@ -106,6 +107,15 @@ class WhisperDictationApp(QMainWindow):
         self.init_ui()
         self.start_listener()
         self.check_models()
+
+    def ensure_ydotoold(self):
+        try:
+            pgrep = subprocess.run(['pgrep', '-x', 'ydotoold'], stdout=subprocess.PIPE)
+            if pgrep.returncode != 0:
+                print("ydotoold is not running. Starting it...")
+                subprocess.Popen(['ydotoold'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            print(f"Error starting ydotoold: {e}")
 
     def init_ui(self):
         self.setWindowTitle("Whisper Sesli Dikte")
