@@ -7,14 +7,32 @@ class TranscriberThread(QThread):
     finished = Signal(str)
     error = Signal(str)
 
-    def __init__(self, model_path, wav_path, language="tr", translate=False):
+    def __init__(self, model_path, wav_path, language="tr", translate=False, target_language="en"):
         super().__init__()
         self.model_path = model_path
         self.wav_path = wav_path
         self.language = language
         self.translate = translate
+        self.target_language = target_language
         self.output_base = "/tmp/whisper_transcription"
         self.output_txt = f"{self.output_base}.txt"
+
+    def google_translate(self, text, source_lang='auto', target_lang='en'):
+        import urllib.request
+        import urllib.parse
+        import json
+        try:
+            sl = source_lang
+            if sl == 'auto':
+                sl = 'auto'
+            url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + sl + "&tl=" + target_lang + "&dt=t&q=" + urllib.parse.quote(text)
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                result = "".join([sentence[0] for sentence in data[0] if sentence[0]])
+                return result
+        except Exception as e:
+            return f"(Çeviri Hatası: {e}) {text}"
 
     def run(self):
         self.started.emit()
@@ -34,8 +52,6 @@ class TranscriberThread(QThread):
             '-of', self.output_base,
             '-np'
         ]
-        if self.translate:
-            cmd.append('-tr')
         
         try:
             print(f"Executing: {' '.join(cmd)}")
@@ -48,6 +64,10 @@ class TranscriberThread(QThread):
                 
                 # Single line cleaning
                 text = text.replace('\n', ' ').strip()
+                
+                if self.translate and text:
+                    text = self.google_translate(text, self.language, self.target_language)
+                    
                 self.finished.emit(text)
                 try:
                     os.remove(self.output_txt)

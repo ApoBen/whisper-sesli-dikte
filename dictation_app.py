@@ -484,9 +484,33 @@ class WhisperDictationApp(QMainWindow):
         trans_cb.setChecked(translate)
         tab_layout.addWidget(trans_cb)
         
+        # Target Lang label and combo (shown only if translate check box is checked)
+        target_label = QLabel("Hedef:")
+        target_label.setVisible(translate)
+        tab_layout.addWidget(target_label)
+        
+        target_combo = QComboBox()
+        target_combo.addItem("İngilizce", "en")
+        target_combo.addItem("Türkçe", "tr")
+        target_combo.addItem("Almanca", "de")
+        target_combo.addItem("Fransızca", "fr")
+        target_combo.addItem("İspanyolca", "es")
+        target_combo.addItem("İtalyanca", "it")
+        target_combo.addItem("Rusça", "ru")
+        target_combo.addItem("Arapça", "ar")
+        target_combo.addItem("Japonca", "ja")
+        target_combo.setCurrentIndex(0) # Default to English
+        target_combo.setVisible(translate)
+        tab_layout.addWidget(target_combo)
+        
+        # Connect toggles
+        trans_cb.toggled.connect(target_label.setVisible)
+        trans_cb.toggled.connect(target_combo.setVisible)
+        
         # Store refs
         tab_widget.lang_combo = lang_combo
         tab_widget.trans_cb = trans_cb
+        tab_widget.target_combo = target_combo
         tab_widget.name_edit = name_edit
         
         # Add to tabs
@@ -584,11 +608,13 @@ class WhisperDictationApp(QMainWindow):
             if active_tab:
                 lang = active_tab.lang_combo.currentData()
                 translate = active_tab.trans_cb.isChecked()
+                target_lang = active_tab.target_combo.currentData()
             else:
                 lang = "tr"
                 translate = False
+                target_lang = "en"
                 
-            self.transcriber_thread = TranscriberThread(model_path, self.wav_path, lang, translate)
+            self.transcriber_thread = TranscriberThread(model_path, self.wav_path, lang, translate, target_lang)
             self.transcriber_thread.finished.connect(self.transcription_finished)
             self.transcriber_thread.error.connect(self.transcription_error)
             self.transcriber_thread.start()
