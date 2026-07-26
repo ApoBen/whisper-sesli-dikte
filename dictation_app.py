@@ -96,8 +96,11 @@ class WhisperDictationApp(QMainWindow):
         super().__init__()
         self.scratch_dir = "/home/apobenol/.gemini/antigravity/scratch"
         self.wav_path = "/tmp/whisper_app_record.wav"
+        self.history_file = os.path.join(os.path.expanduser("~"), ".local", "share", "whisper-dictation", "history.json")
+        self.history_entries = []
         
         self.ensure_ydotoold()
+        self.load_history()
         self.recorder = AudioRecorder(self.wav_path)
         self.transcriber_thread = None
         self.downloader_thread = None
@@ -119,8 +122,8 @@ class WhisperDictationApp(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle("Whisper Sesli Dikte")
-        self.resize(450, 600)
-        self.setMinimumSize(400, 500)
+        self.resize(540, 620)
+        self.setMinimumSize(420, 500)
         
         # Dark modern premium theme stylesheet (QSS)
         self.setStyleSheet("""
@@ -286,9 +289,77 @@ class WhisperDictationApp(QMainWindow):
         """)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        
+        # Root horizontal layout: main panel + history drawer
+        root_layout = QHBoxLayout(central_widget)
+        root_layout.setSpacing(0)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        
+        main_panel = QWidget()
+        main_layout = QVBoxLayout(main_panel)
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(12, 12, 12, 12)
+        root_layout.addWidget(main_panel, 1)
+        
+        # History Drawer (hidden by default)
+        from PySide6.QtWidgets import QListWidget, QListWidgetItem, QScrollArea
+        self.history_drawer = QWidget()
+        self.history_drawer.setVisible(False)
+        self.history_drawer.setMinimumWidth(200)
+        self.history_drawer.setMaximumWidth(220)
+        self.history_drawer.setStyleSheet("""
+            background-color: #12131a;
+            border-left: 1px solid #2d303f;
+        """)
+        drawer_layout = QVBoxLayout(self.history_drawer)
+        drawer_layout.setContentsMargins(8, 12, 8, 12)
+        drawer_layout.setSpacing(6)
+        
+        drawer_title_row = QHBoxLayout()
+        drawer_title = QLabel("📋 Geçmiş")
+        drawer_title.setStyleSheet("font-weight: bold; font-size: 13px; color: #00adb5;")
+        drawer_title_row.addWidget(drawer_title)
+        
+        clear_hist_btn = QPushButton("🗑")
+        clear_hist_btn.setStyleSheet("""
+            QPushButton { border:none; background:transparent; font-size:14px; color:#ff4b5c; padding:0 4px; }
+            QPushButton:hover { color:#ff1a2e; }
+        """)
+        clear_hist_btn.setToolTip("Geçmişi Temizle")
+        clear_hist_btn.clicked.connect(self.clear_history)
+        drawer_title_row.addWidget(clear_hist_btn, 0, Qt.AlignRight)
+        drawer_layout.addLayout(drawer_title_row)
+        
+        self.history_list = QListWidget()
+        self.history_list.setStyleSheet("""
+            QListWidget {
+                background-color: #12131a;
+                border: none;
+                color: #c8c8d2;
+                font-size: 11px;
+            }
+            QListWidget::item {
+                border-bottom: 1px solid #1e2029;
+                padding: 6px 4px;
+                border-radius: 4px;
+            }
+            QListWidget::item:selected {
+                background-color: #1e2029;
+                color: #ffffff;
+            }
+            QListWidget::item:hover {
+                background-color: #1a1b22;
+            }
+        """)
+        self.history_list.itemDoubleClicked.connect(self.copy_history_item)
+        drawer_layout.addWidget(self.history_list)
+        
+        hist_copy_btn = QPushButton("Seçiliyi Kopyala")
+        hist_copy_btn.setObjectName("copyButton")
+        hist_copy_btn.clicked.connect(lambda: self.copy_history_item(self.history_list.currentItem()))
+        drawer_layout.addWidget(hist_copy_btn)
+        
+        root_layout.addWidget(self.history_drawer)
 
         # Tabbed interface for modes & languages (At the very top, Chrome-like with add/close support)
         from PySide6.QtWidgets import QTabWidget
@@ -395,8 +466,33 @@ class WhisperDictationApp(QMainWindow):
         self.clear_button = QPushButton("Temizle")
         self.clear_button.setObjectName("clearButton")
         self.clear_button.clicked.connect(self.text_edit.clear)
+        
+        self.history_toggle_btn = QPushButton("📋 Geçmiş")
+        self.history_toggle_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #1e2029;
+                border: 1px solid #2d303f;
+                border-radius: 8px;
+                padding: 10px 14px;
+                font-weight: bold;
+                color: #a8a8b3;
+            }
+            QPushButton:hover {
+                border-color: #00adb5;
+                color: #00adb5;
+            }
+            QPushButton:checked {
+                background-color: #0f2a2c;
+                border-color: #00adb5;
+                color: #00adb5;
+            }
+        """)
+        self.history_toggle_btn.setCheckable(True)
+        self.history_toggle_btn.toggled.connect(self.toggle_history_drawer)
+        
         button_layout.addWidget(self.copy_button)
         button_layout.addWidget(self.clear_button)
+        button_layout.addWidget(self.history_toggle_btn)
         main_layout.addLayout(button_layout)
 
         # Create default tabs (moved to end to prevent initialization errors)
@@ -641,12 +737,76 @@ class WhisperDictationApp(QMainWindow):
         self.status_label.setText("Hazır")
         if text:
             self.text_edit.append(text)
+            self.add_to_history(text)
             if self.autotype_cb.isChecked():
                 self.paste_text_via_uinput(text)
             else:
                 self.send_notification("Deşifre Tamamlandı", text)
         else:
             self.send_notification("Whisper", "Konuşma algılanamadı.")
+
+    def load_history(self):
+        try:
+            os.makedirs(os.path.dirname(self.history_file), exist_ok=True)
+            if os.path.exists(self.history_file):
+                with open(self.history_file, 'r', encoding='utf-8') as f:
+                    import json
+                    self.history_entries = json.load(f)
+        except Exception:
+            self.history_entries = []
+
+    def save_history(self):
+        try:
+            import json
+            with open(self.history_file, 'w', encoding='utf-8') as f:
+                json.dump(self.history_entries[-200:], f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def add_to_history(self, text):
+        from datetime import datetime
+        from PySide6.QtWidgets import QListWidgetItem
+        timestamp = datetime.now().strftime("%d.%m %H:%M")
+        entry = {"text": text, "time": timestamp}
+        self.history_entries.append(entry)
+        self.save_history()
+        
+        # Add to list widget at the top
+        display = f"[{timestamp}]\n{text[:80]}{'...' if len(text) > 80 else ''}"
+        item = QListWidgetItem(display)
+        item.setData(0x0100, text)  # Store full text in UserRole
+        self.history_list.insertItem(0, item)
+
+    def refresh_history_list(self):
+        from PySide6.QtWidgets import QListWidgetItem
+        self.history_list.clear()
+        for entry in reversed(self.history_entries[-200:]):
+            display = f"[{entry['time']}]\n{entry['text'][:80]}{'...' if len(entry['text']) > 80 else ''}"
+            item = QListWidgetItem(display)
+            item.setData(0x0100, entry['text'])
+            self.history_list.addItem(item)
+
+    def toggle_history_drawer(self, checked):
+        self.history_drawer.setVisible(checked)
+        if checked:
+            self.refresh_history_list()
+            self.resize(self.width() + 210, self.height())
+        else:
+            self.resize(self.width() - 210, self.height())
+
+    def copy_history_item(self, item):
+        if item is None:
+            return
+        full_text = item.data(0x0100)
+        if full_text:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(full_text)
+            self.send_notification("Kopyalandı", "Geçmiş öğesi panoya kopyalandı.")
+
+    def clear_history(self):
+        self.history_entries = []
+        self.history_list.clear()
+        self.save_history()
 
     def transcription_error(self, err):
         self.status_label.setText("Hata oluştu")
