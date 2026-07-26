@@ -122,84 +122,145 @@ class WhisperDictationApp(QMainWindow):
         self.resize(450, 600)
         self.setMinimumSize(400, 500)
         
-        # Dark modern theme palette
+        # Dark modern premium theme stylesheet (QSS)
         self.setStyleSheet("""
             QMainWindow {
-                background-color: #121214;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #16171d, stop:1 #0c0d10);
             }
             QWidget {
                 color: #e1e1e6;
-                font-family: 'Segoe UI', 'Roboto', sans-serif;
+                font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
             }
             QLabel {
                 font-size: 13px;
                 color: #a8a8b3;
+                font-weight: 500;
             }
             QComboBox {
-                background-color: #202024;
-                border: 1px solid #323238;
-                border-radius: 6px;
-                padding: 6px 12px;
+                background-color: #1e2029;
+                border: 1px solid #2d303f;
+                border-radius: 8px;
+                padding: 8px 16px;
                 color: #e1e1e6;
+                font-weight: 500;
+            }
+            QComboBox:hover {
+                border-color: #00adb5;
+                background-color: #232635;
             }
             QComboBox::drop-down {
                 border: none;
+                width: 24px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #1e2029;
+                border: 1px solid #2d303f;
+                selection-background-color: #00adb5;
+                selection-color: #121214;
+                color: #e1e1e6;
             }
             QTextEdit {
-                background-color: #202024;
-                border: 1px solid #323238;
-                border-radius: 8px;
-                padding: 10px;
-                color: #e1e1e6;
+                background-color: #121318;
+                border: 1px solid #232635;
+                border-radius: 12px;
+                padding: 16px;
+                color: #e8e8ef;
                 font-size: 14px;
+                line-height: 150%;
+            }
+            QTextEdit:focus {
+                border-color: #00adb5;
             }
             QCheckBox {
                 spacing: 8px;
+                font-weight: 500;
+                color: #a8a8b3;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border-radius: 5px;
+                border: 2px solid #2d303f;
+                background-color: #1e2029;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #00adb5;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #00adb5;
+                border-color: #00adb5;
             }
             QProgressBar {
-                border: 1px solid #323238;
-                border-radius: 4px;
+                border: none;
+                border-radius: 6px;
                 text-align: center;
-                background-color: #202024;
-                height: 12px;
+                background-color: #1e2029;
+                height: 10px;
+                color: transparent;
             }
             QProgressBar::chunk {
-                background-color: #00adb5;
-                border-radius: 3px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00adb5, stop:1 #00f5ff);
+                border-radius: 6px;
             }
             QPushButton {
-                background-color: #202024;
-                border: 1px solid #323238;
-                border-radius: 6px;
-                padding: 8px 16px;
+                background-color: #1e2029;
+                border: 1px solid #2d303f;
+                border-radius: 8px;
+                padding: 10px 20px;
                 font-weight: bold;
                 color: #e1e1e6;
             }
             QPushButton:hover {
-                background-color: #29292e;
+                background-color: #252838;
+                border-color: #383d54;
             }
             QPushButton:pressed {
-                background-color: #121214;
+                background-color: #121318;
             }
             #recordButton {
-                background-color: #00adb5;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #00adb5, stop:1 #00878d);
                 color: #ffffff;
                 border: none;
-                border-radius: 40px;
-                min-width: 80px;
-                min-height: 80px;
-                max-width: 80px;
-                max-height: 80px;
-                font-size: 16px;
+                border-radius: 50px;
+                min-width: 100px;
+                min-height: 100px;
+                max-width: 100px;
+                max-height: 100px;
+                font-size: 18px;
+                font-weight: bold;
+                letter-spacing: 1px;
             }
             #recordButton:hover {
-                background-color: #00c2cb;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #00c2cb, stop:1 #00adb5);
             }
             #recordButton:checked {
-                background-color: #e23e57;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ff4b5c, stop:1 #dc2f43);
+            }
+            #copyButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00adb5, stop:1 #00f5ff);
+                color: #121214;
+                border: none;
+                border-radius: 8px;
+                font-weight: bold;
+                padding: 11px;
+            }
+            #copyButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00c2cb, stop:1 #33f8ff);
+            }
+            #clearButton {
+                background-color: #1e2029;
+                border: 1px solid #2d303f;
+                border-radius: 8px;
+                font-weight: bold;
+                padding: 11px;
+                color: #a8a8b3;
+            }
+            #clearButton:hover {
+                color: #ff4b5c;
+                border-color: #ff4b5c;
+                background-color: #231f24;
             }
         """)
-
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
@@ -313,8 +374,10 @@ class WhisperDictationApp(QMainWindow):
         # Bottom Buttons
         button_layout = QHBoxLayout()
         self.copy_button = QPushButton("Metni Kopyala")
+        self.copy_button.setObjectName("copyButton")
         self.copy_button.clicked.connect(self.copy_text)
         self.clear_button = QPushButton("Temizle")
+        self.clear_button.setObjectName("clearButton")
         self.clear_button.clicked.connect(self.text_edit.clear)
         button_layout.addWidget(self.copy_button)
         button_layout.addWidget(self.clear_button)
