@@ -498,7 +498,7 @@ class WhisperDictationApp(QMainWindow):
         # Create default tabs (moved to end to prevent initialization errors)
         self.create_tab("Türkçe Dikte", "tr", False)
         self.create_tab("İngilizce Dikte", "en", False)
-        self.create_tab("Çeviri", "auto", False)
+        self.create_tab("Çeviri", "tr", False)
 
         # System Tray
         self.setup_tray()
@@ -577,7 +577,6 @@ class WhisperDictationApp(QMainWindow):
         lang_combo.addItem("Almanca", "de")
         lang_combo.addItem("Fransızca", "fr")
         lang_combo.addItem("İspanyolca", "es")
-        lang_combo.addItem("Otomatik Algıla", "auto")
         lang_combo.setCurrentIndex(lang_combo.findData(lang))
         lang_combo.currentIndexChanged.connect(self.check_models)
         lang_layout.addWidget(lang_combo)
