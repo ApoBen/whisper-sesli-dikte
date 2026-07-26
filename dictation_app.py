@@ -244,12 +244,12 @@ class WhisperDictationApp(QMainWindow):
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #00adb5, stop:1 #00878d);
                 color: #ffffff;
                 border: none;
-                border-radius: 50px;
-                min-width: 100px;
-                min-height: 100px;
-                max-width: 100px;
-                max-height: 100px;
-                font-size: 18px;
+                border-radius: 40px;
+                min-width: 80px;
+                min-height: 80px;
+                max-width: 80px;
+                max-height: 80px;
+                font-size: 15px;
                 font-weight: bold;
                 letter-spacing: 1px;
             }
@@ -286,29 +286,9 @@ class WhisperDictationApp(QMainWindow):
         """)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        central_layout = QHBoxLayout(central_widget)
-        central_layout.setContentsMargins(0, 0, 0, 0)
-        central_layout.setSpacing(0)
-        
-        # Left and right spacer widgets to center layout in full screen
-        self.left_spacer = QWidget()
-        self.right_spacer = QWidget()
-        self.left_spacer.setStyleSheet("background-color: #0c0d10;")
-        self.right_spacer.setStyleSheet("background-color: #0c0d10;")
-        self.left_spacer.setVisible(False)
-        self.right_spacer.setVisible(False)
-        
-        central_layout.addWidget(self.left_spacer, 1)
-        
-        self.main_container = QWidget()
-        self.main_container_layout = QVBoxLayout(self.main_container)
-        self.main_container_layout.setSpacing(16)
-        self.main_container_layout.setContentsMargins(20, 20, 20, 20)
-        central_layout.addWidget(self.main_container, 2)
-        
-        central_layout.addWidget(self.right_spacer, 1)
-        
-        main_layout = self.main_container_layout
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(12, 12, 12, 12)
 
         # Tabbed interface for modes & languages (At the very top, Chrome-like with add/close support)
         from PySide6.QtWidgets import QTabWidget
@@ -317,12 +297,7 @@ class WhisperDictationApp(QMainWindow):
         self.tabs.setMovable(True)
         self.tabs.tabCloseRequested.connect(self.close_tab)
         
-        # Add tab button (+) and settings button (🔧) corner layout
-        corner_widget = QWidget()
-        corner_layout = QHBoxLayout(corner_widget)
-        corner_layout.setContentsMargins(0, 0, 0, 0)
-        corner_layout.setSpacing(2)
-        
+        # Add tab button (+)
         self.add_tab_btn = QPushButton("+")
         self.add_tab_btn.setStyleSheet("""
             QPushButton {
@@ -339,25 +314,7 @@ class WhisperDictationApp(QMainWindow):
             }
         """)
         self.add_tab_btn.clicked.connect(self.add_new_tab)
-        corner_layout.addWidget(self.add_tab_btn)
-        
-        self.settings_btn = QPushButton("🔧")
-        self.settings_btn.setStyleSheet("""
-            QPushButton {
-                font-size: 14px;
-                border: none;
-                background-color: transparent;
-                padding: 2px 8px;
-            }
-            QPushButton:hover {
-                background-color: #252838;
-                border-radius: 4px;
-            }
-        """)
-        self.settings_btn.clicked.connect(self.show_settings)
-        corner_layout.addWidget(self.settings_btn)
-        
-        self.tabs.setCornerWidget(corner_widget, Qt.TopRightCorner)
+        self.tabs.setCornerWidget(self.add_tab_btn, Qt.TopRightCorner)
         
         main_layout.addWidget(self.tabs)
         self.tabs.currentChanged.connect(self.check_models)
@@ -425,46 +382,6 @@ class WhisperDictationApp(QMainWindow):
         options_layout.addWidget(self.notify_cb)
         main_layout.addLayout(options_layout)
 
-        # Settings Overlay Panel
-        self.settings_panel = QWidget()
-        self.settings_panel.setObjectName("settingsPanel")
-        self.settings_panel.setVisible(False)
-        self.settings_panel.setStyleSheet("""
-            #settingsPanel {
-                background-color: #1a1b22;
-                border: 1px solid #00adb5;
-                border-radius: 12px;
-            }
-        """)
-        panel_layout = QVBoxLayout(self.settings_panel)
-        panel_layout.setContentsMargins(16, 16, 16, 16)
-        
-        # Title and Close button row
-        title_layout = QHBoxLayout()
-        title_label = QLabel("⚙️ Ayarlar")
-        title_label.setStyleSheet("font-weight: bold; font-size: 14px; color: #00adb5;")
-        title_layout.addWidget(title_label)
-        
-        close_btn = QPushButton("✖")
-        close_btn.setStyleSheet("border: none; background: transparent; font-size: 14px; color: #ff4b5c;")
-        close_btn.clicked.connect(self.hide_settings)
-        title_layout.addWidget(close_btn, 0, Qt.AlignRight)
-        panel_layout.addLayout(title_layout)
-        
-        # Full screen check
-        self.fullscreen_cb = QCheckBox("Tam Ekran Modu")
-        self.fullscreen_cb.toggled.connect(self.toggle_fullscreen)
-        panel_layout.addWidget(self.fullscreen_cb)
-        
-        # Wide screen check
-        self.widescreen_cb = QCheckBox("Geniş Ekran Modu (Tam Ekranda)")
-        self.widescreen_cb.setChecked(False)
-        self.widescreen_cb.setEnabled(False)
-        self.widescreen_cb.toggled.connect(self.update_widescreen_layout)
-        panel_layout.addWidget(self.widescreen_cb)
-        
-        main_layout.addWidget(self.settings_panel)
-
         # Text Output
         self.text_edit = QTextEdit()
         self.text_edit.setPlaceholderText("Konuşulan metin burada görünecektir...")
@@ -485,7 +402,7 @@ class WhisperDictationApp(QMainWindow):
         # Create default tabs (moved to end to prevent initialization errors)
         self.create_tab("Türkçe Dikte", "tr", False)
         self.create_tab("İngilizce Dikte", "en", False)
-        self.create_tab("Çeviri", "auto", True)
+        self.create_tab("Çeviri", "auto", False)
 
         # System Tray
         self.setup_tray()
@@ -594,31 +511,7 @@ class WhisperDictationApp(QMainWindow):
     def add_new_tab(self):
         self.create_tab(f"Dikte {self.tabs.count() + 1}")
 
-    def show_settings(self):
-        self.settings_panel.setVisible(True)
 
-    def hide_settings(self):
-        self.settings_panel.setVisible(False)
-
-    def toggle_fullscreen(self, checked):
-        if checked:
-            self.showFullScreen()
-            self.widescreen_cb.setEnabled(True)
-        else:
-            self.showNormal()
-            self.widescreen_cb.setEnabled(False)
-            self.widescreen_cb.setChecked(False)
-        self.update_widescreen_layout()
-
-    def update_widescreen_layout(self):
-        if self.isFullScreen() and not self.widescreen_cb.isChecked():
-            self.left_spacer.setVisible(True)
-            self.right_spacer.setVisible(True)
-            self.main_container.setMaximumWidth(600)
-        else:
-            self.left_spacer.setVisible(False)
-            self.right_spacer.setVisible(False)
-            self.main_container.setMaximumWidth(16777215)
     def check_models(self):
         model_name = self.get_active_model()
         model_path = os.path.join(self.scratch_dir, f"ggml-{model_name}.bin")
