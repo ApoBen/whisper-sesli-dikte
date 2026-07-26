@@ -245,7 +245,7 @@ class WhisperDictationApp(QMainWindow):
         model_vbox.addWidget(QLabel("Whisper Modeli:"))
         self.model_combo = QComboBox()
         self.model_combo.addItems(["tiny", "base", "small", "medium", "large-v3"])
-        self.model_combo.setCurrentText("small")
+        self.model_combo.setCurrentText("large-v3")
         self.model_combo.currentTextChanged.connect(self.check_models)
         model_vbox.addWidget(self.model_combo)
         config_layout.addLayout(model_vbox)
@@ -374,7 +374,10 @@ class WhisperDictationApp(QMainWindow):
 
     @Slot()
     def f9_triggered(self):
-        self.record_button.click()
+        if self.record_button.isEnabled():
+            self.record_button.click()
+        else:
+            self.send_notification("Model Eksik", "Seçili model yüklü değil. Lütfen önce indirin veya hazır bir model seçin.")
 
     def get_active_model(self):
         if self.advanced_cb.isChecked() and self.use_en_model_cb.isChecked():
