@@ -7,11 +7,12 @@ class TranscriberThread(QThread):
     finished = Signal(str)
     error = Signal(str)
 
-    def __init__(self, model_path, wav_path, language="tr"):
+    def __init__(self, model_path, wav_path, language="tr", translate=False):
         super().__init__()
         self.model_path = model_path
         self.wav_path = wav_path
         self.language = language
+        self.translate = translate
         self.output_base = "/tmp/whisper_transcription"
         self.output_txt = f"{self.output_base}.txt"
 
@@ -33,6 +34,8 @@ class TranscriberThread(QThread):
             '-of', self.output_base,
             '-np'
         ]
+        if self.translate:
+            cmd.append('-tr')
         
         try:
             process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

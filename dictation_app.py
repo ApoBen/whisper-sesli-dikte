@@ -278,9 +278,47 @@ class WhisperDictationApp(QMainWindow):
         self.autotype_cb.setChecked(True)
         self.notify_cb = QCheckBox("Ekran Bildirimleri (Notification)")
         self.notify_cb.setChecked(True)
+        self.advanced_cb = QCheckBox("Gelişmiş Ayarlar")
+        self.advanced_cb.setChecked(False)
+        self.advanced_cb.toggled.connect(self.toggle_advanced)
         options_layout.addWidget(self.autotype_cb)
         options_layout.addWidget(self.notify_cb)
+        options_layout.addWidget(self.advanced_cb)
         main_layout.addLayout(options_layout)
+
+        # Advanced Settings Widget
+        self.advanced_widget = QWidget()
+        self.advanced_widget.setVisible(False)
+        self.advanced_widget.setStyleSheet("background-color: #1a1a1e; border-radius: 6px; border: 1px solid #2d2d31;")
+        adv_layout = QVBoxLayout(self.advanced_widget)
+        adv_layout.setContentsMargins(12, 12, 12, 12)
+        
+        adv_title = QLabel("Gelişmiş Çeviri & İngilizce Modelleri")
+        adv_title.setStyleSheet("font-weight: bold; color: #00adb5; border: none;")
+        adv_layout.addWidget(adv_title)
+        
+        trans_layout = QHBoxLayout()
+        self.translate_cb = QCheckBox("İngilizceye Çevir (-tr)")
+        self.translate_cb.setChecked(False)
+        trans_layout.addWidget(self.translate_cb)
+        
+        self.use_en_model_cb = QCheckBox("İngilizce Odaklı Model (.en)")
+        self.use_en_model_cb.setChecked(False)
+        self.use_en_model_cb.toggled.connect(self.toggle_en_model_cb)
+        trans_layout.addWidget(self.use_en_model_cb)
+        adv_layout.addLayout(trans_layout)
+        
+        model_layout = QHBoxLayout()
+        model_layout.addWidget(QLabel("İngilizce Modeli:"))
+        self.en_model_combo = QComboBox()
+        self.en_model_combo.addItems(["tiny.en", "base.en", "small.en", "medium.en"])
+        self.en_model_combo.setCurrentText("small.en")
+        self.en_model_combo.setEnabled(False)
+        self.en_model_combo.currentTextChanged.connect(self.check_models)
+        model_layout.addWidget(self.en_model_combo)
+        adv_layout.addLayout(model_layout)
+        
+        main_layout.addWidget(self.advanced_widget)
 
         # Text Output
         self.text_edit = QTextEdit()
@@ -339,8 +377,21 @@ class WhisperDictationApp(QMainWindow):
     def f9_triggered(self):
         self.record_button.click()
 
+    def get_active_model(self):
+        if self.advanced_cb.isChecked() and self.use_en_model_cb.isChecked():
+            return self.en_model_combo.currentText()
+        return self.model_combo.currentText()
+
+    def toggle_advanced(self, checked):
+        self.advanced_widget.setVisible(checked)
+        self.check_models()
+
+    def toggle_en_model_cb(self, checked):
+        self.en_model_combo.setEnabled(checked)
+        self.check_models()
+
     def check_models(self):
-        model_name = self.model_combo.currentText()
+        model_name = self.get_active_model()
         model_path = os.path.join(self.scratch_dir, f"ggml-{model_name}.bin")
         if os.path.exists(model_path):
             self.status_label.setText(f"Model Hazır: {model_name}")
@@ -353,7 +404,7 @@ class WhisperDictationApp(QMainWindow):
             self.record_button.setEnabled(False)
 
     def download_model(self):
-        model_name = self.model_combo.currentText()
+        model_name = self.get_active_model()
         self.download_bar.setVisible(True)
         self.download_button.setEnabled(False)
         self.status_label.setText("Model indiriliyor...")
@@ -403,11 +454,15 @@ class WhisperDictationApp(QMainWindow):
             self.send_notification("Kayıt Durduruldu", "Ses çözümleniyor...")
             
             # Start Transcription
-            model_name = self.model_combo.currentText()
+            model_name = self.get_active_model()
             model_path = os.path.join(self.scratch_dir, f"ggml-{model_name}.bin")
             lang = self.lang_combo.currentData()
             
-            self.transcriber_thread = TranscriberThread(model_path, self.wav_path, lang)
+            translate = False
+            if self.advanced_cb.isChecked() and self.translate_cb.isChecked():
+                translate = True
+                
+            self.transcriber_thread = TranscriberThread(model_path, self.wav_path, lang, translate)
             self.transcriber_thread.finished.connect(self.transcription_finished)
             self.transcriber_thread.error.connect(self.transcription_error)
             self.transcriber_thread.start()
