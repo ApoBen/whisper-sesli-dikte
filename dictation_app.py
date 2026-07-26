@@ -298,30 +298,49 @@ class WhisperDictationApp(QMainWindow):
         self.level_bar.setFormat("Mikrofon Düzeyi")
         main_layout.addWidget(self.level_bar)
 
-        # Config Panel
-        config_layout = QHBoxLayout()
-        
-        # Model selector
-        model_vbox = QVBoxLayout()
-        model_vbox.addWidget(QLabel("Whisper Modeli:"))
+        # Model Selection (simple HBox)
+        model_layout = QHBoxLayout()
+        model_layout.addWidget(QLabel("Whisper Modeli:"))
         self.model_combo = QComboBox()
         self.model_combo.addItems(["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v3"])
         self.model_combo.setCurrentText("large-v3")
         self.model_combo.currentTextChanged.connect(self.check_models)
-        model_vbox.addWidget(self.model_combo)
-        config_layout.addLayout(model_vbox)
+        model_layout.addWidget(self.model_combo)
+        main_layout.addLayout(model_layout)
 
-        # Language selector
-        lang_vbox = QVBoxLayout()
-        lang_vbox.addWidget(QLabel("Dikte Dili:"))
-        self.lang_combo = QComboBox()
-        self.lang_combo.addItem("Türkçe", "tr")
-        self.lang_combo.addItem("İngilizce", "en")
-        self.lang_combo.addItem("Otomatik Algıla", "auto")
-        lang_vbox.addWidget(self.lang_combo)
-        config_layout.addLayout(lang_vbox)
-
-        main_layout.addLayout(config_layout)
+        # Tabbed interface for modes & languages
+        from PySide6.QtWidgets import QTabWidget
+        self.tabs = QTabWidget()
+        
+        tab_tr = QWidget()
+        layout_tr = QVBoxLayout(tab_tr)
+        lbl_tr = QLabel("Türkçe sesleri çözümler ve Türkçe olarak yazdırır.")
+        lbl_tr.setAlignment(Qt.AlignCenter)
+        layout_tr.addWidget(lbl_tr)
+        self.tabs.addTab(tab_tr, "🇹🇷 Türkçe Dikte")
+        
+        tab_en = QWidget()
+        layout_en = QVBoxLayout(tab_en)
+        lbl_en = QLabel("English sesleri çözümler ve İngilizce olarak yazdırır.")
+        lbl_en.setAlignment(Qt.AlignCenter)
+        layout_en.addWidget(lbl_en)
+        self.tabs.addTab(tab_en, "🇬🇧 İngilizce Dikte")
+        
+        tab_trans = QWidget()
+        layout_trans = QVBoxLayout(tab_trans)
+        lbl_trans = QLabel("Herhangi bir dildeki konuşmayı İngilizceye çevirerek yazdırır.")
+        lbl_trans.setAlignment(Qt.AlignCenter)
+        layout_trans.addWidget(lbl_trans)
+        self.tabs.addTab(tab_trans, "🔀 İngilizceye Çeviri")
+        
+        tab_auto = QWidget()
+        layout_auto = QVBoxLayout(tab_auto)
+        lbl_auto = QLabel("Konuşma dilini otomatik tespit eder ve kendi dilinde yazdırır.")
+        lbl_auto.setAlignment(Qt.AlignCenter)
+        layout_auto.addWidget(lbl_auto)
+        self.tabs.addTab(tab_auto, "🌍 Otomatik Algıla")
+        
+        main_layout.addWidget(self.tabs)
 
         # Downloader Progress Bar
         self.download_bar = QProgressBar()
@@ -339,32 +358,9 @@ class WhisperDictationApp(QMainWindow):
         self.autotype_cb.setChecked(True)
         self.notify_cb = QCheckBox("Ekran Bildirimleri (Notification)")
         self.notify_cb.setChecked(True)
-        self.advanced_cb = QCheckBox("Gelişmiş Ayarlar")
-        self.advanced_cb.setChecked(False)
-        self.advanced_cb.toggled.connect(self.toggle_advanced)
         options_layout.addWidget(self.autotype_cb)
         options_layout.addWidget(self.notify_cb)
-        options_layout.addWidget(self.advanced_cb)
         main_layout.addLayout(options_layout)
-
-        # Advanced Settings Widget
-        self.advanced_widget = QWidget()
-        self.advanced_widget.setVisible(False)
-        self.advanced_widget.setStyleSheet("background-color: #1a1a1e; border-radius: 6px; border: 1px solid #2d2d31;")
-        adv_layout = QVBoxLayout(self.advanced_widget)
-        adv_layout.setContentsMargins(12, 12, 12, 12)
-        
-        adv_title = QLabel("Gelişmiş Dikte Ayarları")
-        adv_title.setStyleSheet("font-weight: bold; color: #00adb5; border: none;")
-        adv_layout.addWidget(adv_title)
-        
-        trans_layout = QHBoxLayout()
-        self.translate_cb = QCheckBox("Sesli Girişi İngilizceye Çevir (-tr)")
-        self.translate_cb.setChecked(False)
-        trans_layout.addWidget(self.translate_cb)
-        adv_layout.addLayout(trans_layout)
-        
-        main_layout.addWidget(self.advanced_widget)
 
         # Text Output
         self.text_edit = QTextEdit()
@@ -430,8 +426,7 @@ class WhisperDictationApp(QMainWindow):
     def get_active_model(self):
         return self.model_combo.currentText()
 
-    def toggle_advanced(self, checked):
-        self.advanced_widget.setVisible(checked)
+
 
     def check_models(self):
         model_name = self.get_active_model()
@@ -499,11 +494,21 @@ class WhisperDictationApp(QMainWindow):
             # Start Transcription
             model_name = self.get_active_model()
             model_path = os.path.join(self.scratch_dir, f"ggml-{model_name}.bin")
-            lang = self.lang_combo.currentData()
             
-            translate = False
-            if self.advanced_cb.isChecked() and self.translate_cb.isChecked():
+            # Determine lang and translate from the active tab
+            active_tab_idx = self.tabs.currentIndex()
+            if active_tab_idx == 0:   # Türkçe Dikte
+                lang = "tr"
+                translate = False
+            elif active_tab_idx == 1: # İngilizce Dikte
+                lang = "en"
+                translate = False
+            elif active_tab_idx == 2: # İngilizceye Çeviri
+                lang = "auto"
                 translate = True
+            else:                     # Otomatik Algıla
+                lang = "auto"
+                translate = False
                 
             self.transcriber_thread = TranscriberThread(model_path, self.wav_path, lang, translate)
             self.transcriber_thread.finished.connect(self.transcription_finished)
