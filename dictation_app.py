@@ -362,11 +362,10 @@ class WhisperDictationApp(QMainWindow):
                 self.activateWindow()
 
     def closeEvent(self, event):
-        # Minimize to tray instead of exiting
-        if self.tray_icon.isVisible():
-            self.hide()
-            event.ignore()
-            self.send_notification("Arka Planda Çalışıyor", "F9 tuşu ile istediğiniz zaman dikte başlatabilirsiniz.")
+        # Pencere kapatıldığında çıkmak yerine sistem tepsisine gizle
+        self.hide()
+        event.ignore()
+        self.send_notification("Arka Planda Çalışıyor", "F9 tuşu ile istediğiniz zaman dikte başlatabilirsiniz.")
 
     def start_listener(self):
         self.listener_thread = GlobalF9Listener()
