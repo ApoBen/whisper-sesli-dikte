@@ -80,18 +80,36 @@ if systemctl --user list-unit-files | grep -q ydotool; then
     systemctl --user enable --now ydotool.service
 fi
 
-# 4. Otomatik Başlatma Kısayolu
-echo -e "${GREEN}[*] Otomatik başlatma kısayolu oluşturuluyor...${NC}"
-mkdir -p ~/.config/autostart
+# 4. Masaüstü Kısayolu ve Otomatik Başlatma
+echo -e "${GREEN}[*] Masaüstü uygulama kısayolları oluşturuluyor...${NC}"
 APP_DIR=$(pwd)
 
+# Uygulama menüsü kısayolu (Launcher)
+mkdir -p ~/.local/share/applications
+cat << LAUNCHER > ~/.local/share/applications/whisper-dictation.desktop
+[Desktop Entry]
+Name=Whisper Sesli Dikte
+Comment=Yapay zeka destekli sesli dikte ve çeviri aracı
+Exec=/usr/bin/python ${APP_DIR}/dictation_app.py
+Icon=audio-input-microphone
+Terminal=false
+Type=Application
+Categories=Utility;AudioVideo;
+StartupNotify=true
+LAUNCHER
+
+# Otomatik başlatma kısayolu (Autostart)
+mkdir -p ~/.config/autostart
 cat << AUTOSTART > ~/.config/autostart/whisper-dictation.desktop
 [Desktop Entry]
+Name=Whisper Sesli Dikte
 Exec=/usr/bin/python ${APP_DIR}/dictation_app.py
-Name=Whisper Dictation
 Type=Application
 X-KDE-Autostart-after=panel
 AUTOSTART
+
+# Desktop veritabanını güncelle
+update-desktop-database ~/.local/share/applications &>/dev/null
 
 echo -e "${GREEN}[✓] Kurulum tamamlandı!${NC}"
 echo -e "${YELLOW}[!] Değişikliklerin (grup yetkileri vb.) tam geçerli olması için oturumu kapatıp açmanız veya sistemi yeniden başlatmanız önerilir.${NC}"
